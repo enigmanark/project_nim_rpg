@@ -38,9 +38,17 @@ proc NewPlayState*(gw : float, gh : float, ww : float, wh : float) : PlayState =
     playState.PlacePlayer()
     return playState
 
+proc AssistPlayerMove(self : PlayState) =
+    if self.player.tryingToMove:
+        if self.dungeonData.CheckCollisionWithTile(self.player.moveToPosition):
+            self.player.ApplyMove(true)
+        else:
+            self.player.ApplyMove(false)
+
 method Update*(self : var PlayState, delta : float, camera : var Camera2D) =
     #update player
     self.player.Update(delta)
+    self.AssistPlayerMove()
 
     #regenerate dungeon with the r key
     if isKeyPressed(KeyboardKey.R):

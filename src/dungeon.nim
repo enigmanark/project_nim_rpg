@@ -21,6 +21,15 @@ const
     WALL* = 1
     FLOOR* = 2
 
+proc CheckCollisionWithTile*(self : DungeonData, position : Vector2) : bool =
+    let tile_x = int(position.x / 16)
+    let tile_y = int(position.y / 16)
+    let tileData = self.dungeon[tile_y][tile_x]
+    if tileData == WALL:
+        return false
+    else:
+        return true
+
 proc GenerateTiles(self : var DungeonData, max_w : int, max_h : int) =
     randomize()
     let max_room_w = 12
