@@ -2,12 +2,8 @@ import nimraylib_now
 import state as State
 import dungeon
 import random
-
-type Player = object
-    position : Vector2
-    texture : Texture2D
-    animTimer : float
-    animDelay : float
+import sprite_animated
+import player as Player
 
 type PlayState* = ref object of State
     gameWidth : float
@@ -19,22 +15,17 @@ type PlayState* = ref object of State
 
 proc PlacePlayer(self : var PlayState) =
     var placed = false
-    var player = Player()
-    player.texture = loadTexture("res/player.png")
-    player.animDelay = 0.2
-    player.animTimer = 0f
+    self.player = NewPlayer("res/player.png", 0, 0)
     while not placed:
         echo "Trying to place player..."
         randomize()
         let x = rand(0..self.dungeonData.widthInTiles)
         let y = rand(0..self.dungeonData.heightInTiles)
         if self.dungeonData.dungeon[y][x] == FLOOR:
-            player.position = Vector2()
-            player.position.x = cfloat(x * 16)
-            player.position.y = cfloat(y * 16)
+            self.player.position.x = cfloat(x * 16)
+            self.player.position.y = cfloat(y * 16)
             placed = true
-            echo "Placed"
-    self.player = player
+            echo "Placed played."
 
 proc NewPlayState*(gw : float, gh : float, ww : float, wh : float) : PlayState =
     var playState = PlayState()
@@ -48,14 +39,20 @@ proc NewPlayState*(gw : float, gh : float, ww : float, wh : float) : PlayState =
     return playState
 
 method Update*(self : var PlayState, delta : float, camera : var Camera2D) =
-    camera.target = self.player.position
-    let x_off = self.windowWidth / 2
-    let y_off = self.windowHeight / 2
-    camera.offset = Vector2(x : x_off, y : y_off)
+    #update player
+    self.player.Update(delta)
+
+    #regenerate dungeon with the r key
     if isKeyPressed(KeyboardKey.R):
         randomize()
         self.dungeonData = GenerateDungeon(rand(30..100), rand(30..100))
         self.PlacePlayer()
+
+    #update camera
+    camera.target = self.player.position
+    let x_off = self.windowWidth / 2
+    let y_off = self.windowHeight / 2
+    camera.offset = Vector2(x : x_off, y : y_off)
 
 method Draw*(self : PlayState, camera : Camera2D) =
     beginMode2D(camera)
@@ -69,12 +66,7 @@ method Draw*(self : PlayState, camera : Camera2D) =
             self.dungeonData.DrawTile(tile, pos)
 
     #draw player
-    var src = Rectangle()
-    src.x = 0f
-    src.y = 0f
-    src.width = 16f
-    src.height = 16
-    drawTextureRec(self.player.texture, src, self.player.position, White)
+    self.player.Draw()
 
     endMode2D()
 
